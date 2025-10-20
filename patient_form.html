@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>心内科候诊信息登记系统</title>
     <style>
+        /* 样式保持不变 */
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
             background-color: #f0f8ff;
@@ -126,13 +127,6 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        .config-panel {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 5px;
-            margin-bottom: 20px;
-            border-left: 4px solid #ffc107;
-        }
     </style>
 </head>
 <body>
@@ -140,17 +134,8 @@
         <h1>心内科候诊信息登记系统</h1>
         <p class="subtitle">请填写以下信息，帮助医生提前了解您的状况</p>
         
-        <div class="config-panel">
-            <h3>⚠️ 安全提醒</h3>
-            <p>为了保护您的GitHub令牌安全，请按照以下步骤配置：</p>
-            <ol>
-                <li>将GitHub令牌和仓库信息配置在单独的配置文件中</li>
-                <li>确保配置文件不被上传到公开仓库</li>
-                <li>使用环境变量或服务器端配置管理敏感信息</li>
-            </ol>
-        </div>
-        
         <form id="patientForm">
+            <!-- 表单内容保持不变 -->
             <div class="row">
                 <div class="col">
                     <div class="form-group">
@@ -231,43 +216,10 @@
         © 2023 心内科门诊系统 | 数据安全存储保障
     </footer>
 
+    <!-- 引入配置文件 -->
+    <script src="config.js"></script>
+    
     <script>
-        // 安全配置方案：将敏感信息从代码中移除
-        // 实际部署时，请使用以下方法之一：
-        // 1. 使用环境变量
-        // 2. 使用单独的配置文件（不提交到Git）
-        // 3. 使用服务器端API代理
-        
-        // 示例：从外部配置文件加载（实际部署时创建config.js文件）
-        let GITHUB_CONFIG = {};
-        
-        // 尝试加载外部配置
-        async function loadConfig() {
-            try {
-                // 方法1：从外部JS文件加载（需要创建config.js）
-                // const configModule = await import('./config.js');
-                // GITHUB_CONFIG = configModule.GITHUB_CONFIG;
-                
-                // 方法2：从服务器API获取（推荐）
-                // const response = await fetch('/api/config');
-                // GITHUB_CONFIG = await response.json();
-                
-                // 方法3：使用环境变量（在构建时注入）
-                // GITHUB_CONFIG = {
-                //     token: window.GITHUB_TOKEN,
-                //     repo: window.GITHUB_REPO
-                // };
-                
-                // 临时方案：提示用户配置
-                if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.repo) {
-                    console.warn('请配置GitHub访问信息');
-                    // 在实际部署中，这里应该提供配置界面或使用安全的配置方法
-                }
-            } catch (error) {
-                console.error('配置加载失败:', error);
-            }
-        }
-        
         // 显示加载动画
         function showLoading() {
             document.getElementById('patientLoading').style.display = 'block';
@@ -278,34 +230,10 @@
             document.getElementById('patientLoading').style.display = 'none';
         }
         
-        // 安全的数据提交函数
-        async function submitPatientData(patientData) {
-            // 方法1：使用服务器端API代理（推荐）
-            try {
-                const response = await fetch('/api/submit-patient', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(patientData)
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`服务器错误: ${response.status}`);
-                }
-                
-                return await response.json();
-            } catch (error) {
-                // 如果服务器代理不可用，回退到安全的客户端方案
-                return await submitViaSecureClient(patientData);
-            }
-        }
-        
-        // 安全的客户端提交方案
-        async function submitViaSecureClient(patientData) {
-            // 检查配置是否已加载
-            if (!GITHUB_CONFIG.token || !GITHUB_CONFIG.repo) {
-                throw new Error('系统未正确配置，请联系管理员');
+        // 保存数据到GitHub Issues
+        async function saveToGitHub(patientData) {
+            if (!window.GITHUB_CONFIG || !window.GITHUB_CONFIG.token || !window.GITHUB_CONFIG.repo) {
+                throw new Error('系统未配置GitHub访问信息');
             }
             
             try {
@@ -326,10 +254,10 @@
 | 提交时间 | ${new Date().toLocaleString()} |
                 `;
                 
-                const response = await fetch(`https://api.github.com/repos/${GITHUB_CONFIG.repo}/issues`, {
+                const response = await fetch(`https://api.github.com/repos/${window.GITHUB_CONFIG.repo}/issues`, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `token ${GITHUB_CONFIG.token}`,
+                        'Authorization': `token ${window.GITHUB_CONFIG.token}`,
                         'Content-Type': 'application/json',
                         'Accept': 'application/vnd.github.v3+json'
                     },
@@ -349,7 +277,7 @@
                 return { success: true, id: result.number };
                 
             } catch (error) {
-                throw new Error(`提交失败: ${error.message}`);
+                throw new Error(`保存到GitHub失败: ${error.message}`);
             }
         }
         
@@ -389,12 +317,12 @@
                     throw new Error('请填写所有必填字段');
                 }
                 
-                // 提交数据
-                const result = await submitPatientData(formData);
+                // 保存数据到GitHub
+                const result = await saveToGitHub(formData);
                 
                 // 显示成功消息
                 successMessage.style.display = 'block';
-                successMessage.innerHTML = `信息提交成功！<br>记录编号: #${result.id}`;
+                successMessage.innerHTML = `信息提交成功！<br>GitHub Issue编号: #${result.id}`;
                 
                 // 重置表单
                 document.getElementById('patientForm').reset();
@@ -421,9 +349,6 @@
         
         // 页面加载时初始化
         document.addEventListener('DOMContentLoaded', function() {
-            // 加载配置
-            loadConfig();
-            
             // 添加离开页面确认
             window.addEventListener('beforeunload', function(e) {
                 const inputsFilled = document.getElementById('name').value || 
