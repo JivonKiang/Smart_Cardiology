@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>心内科候诊信息登记 - LeanCloud版</title>
+    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f0f8ff;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 15px rgba(0, 0, 150, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #1a73e8;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        .row {
+            display: flex;
+            gap: 20px;
+        }
+        .col {
+            flex: 1;
+        }
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 10px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            font-weight: normal;
+            color: #333;
+        }
+        .checkbox-group input {
+            width: auto;
+            margin-right: 5px;
+        }
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            background-color: #0d62d9;
+        }
+        .success-message {
+            display: none;
+            background-color: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        .error-message {
+            display: none;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 20px;
+        }
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+        }
+        .config-status {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>心内科候诊信息登记</h1>
+        <p class="subtitle">请填写以下信息，帮助医生提前了解您的状况</p>
+        
+        <div id="configStatus" class="config-status">
+            <strong>配置状态:</strong> <span id="statusText">正在检查配置...</span>
+        </div>
+        
+        <form id="patientForm">
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="name">姓名</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="gender">性别</label>
+                        <select id="gender" name="gender" required>
+                            <option value="">请选择</option>
+                            <option value="男">男</option>
+                            <option value="女">女</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col">
+                    <div class="form-group">
+                        <label for="age">年龄</label>
+                        <input type="number" id="age" name="age" min="1" max="120" required>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="form-group">
+                        <label for="phone">联系电话</label>
+                        <input type="tel" id="phone" name="phone" required>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="symptoms">主要症状</label>
+                <textarea id="symptoms" name="symptoms" rows="3" required></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="medicalHistory">病史信息</label>
+                <textarea id="medicalHistory" name="medicalHistory" rows="3"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label>当前服用药物</label>
+                <div class="checkbox-group">
+                    <label><input type="checkbox" name="medications" value="降压药"> 降压药</label>
+                    <label><input type="checkbox" name="medications" value="降糖药"> 降糖药</label>
+                    <label><input type="checkbox" name="medications" value="抗凝药"> 抗凝药</label>
+                    <label><input type="checkbox" name="medications" value="其他"> 其他</label>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="bloodPressure">血压测量值 (选填)</label>
+                <input type="text" id="bloodPressure" name="bloodPressure" placeholder="例如：120/80">
+            </div>
+            
+            <button type="submit" id="submitBtn">提交信息</button>
+            
+            <div id="successMessage" class="success-message">
+                信息提交成功！医生已收到您的资料
+            </div>
+            
+            <div id="errorMessage" class="error-message">
+                提交失败，请稍后重试或联系工作人员
+            </div>
+        </form>
+    </div>
+    
+    <footer>
+        © 2023 心内科门诊系统 | 保护患者隐私，数据安全存储
+    </footer>
+
+    <script>
+        // LeanCloud配置 - 请替换为您的实际配置
+        const LEANCLOUD_CONFIG = {
+            appId: 'YOUR_APP_ID_HERE',        // 替换为您的App ID
+            appKey: 'YOUR_APP_KEY_HERE',      // 替换为您的App Key
+            serverURL: 'YOUR_SERVER_URL_HERE' // 替换为您的服务器地址，如：https://xxx.lc-cn-n1-shared.com
+        };
+
+        // 初始化LeanCloud
+        function initLeanCloud() {
+            try {
+                // 检查配置是否已填写
+                if (LEANCLOUD_CONFIG.appId.includes('YOUR_') || 
+                    LEANCLOUD_CONFIG.appKey.includes('YOUR_') || 
+                    LEANCLOUD_CONFIG.serverURL.includes('YOUR_')) {
+                    document.getElementById('statusText').innerHTML = 
+                        '<span style="color: red;">错误: 请先配置LeanCloud参数（App ID、App Key、服务器地址）</span>';
+                    document.getElementById('submitBtn').disabled = true;
+                    return false;
+                }
+
+                // 初始化LeanCloud
+                AV.init({
+                    appId: LEANCLOUD_CONFIG.appId,
+                    appKey: LEANCLOUD_CONFIG.appKey,
+                    serverURL: LEANCLOUD_CONFIG.serverURL
+                });
+
+                // 测试连接
+                const TestObject = AV.Object.extend('Test');
+                const testObject = new TestObject();
+                testObject.set('testField', 'connection_test');
+                
+                return testObject.save().then(() => {
+                    document.getElementById('statusText').innerHTML = 
+                        '<span style="color: green;">✓ LeanCloud连接正常</span>';
+                    return true;
+                }).catch(error => {
+                    document.getElementById('statusText').innerHTML = 
+                        `<span style="color: red;">连接失败: ${error.message}</span>`;
+                    console.error('LeanCloud连接测试失败:', error);
+                    return false;
+                });
+                
+            } catch (error) {
+                document.getElementById('statusText').innerHTML = 
+                    `<span style="color: red;">初始化错误: ${error.message}</span>`;
+                console.error('LeanCloud初始化错误:', error);
+                return false;
+            }
+        }
+
+        // 表单提交处理
+        document.getElementById('patientForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            
+            // 隐藏消息
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            
+            // 禁用提交按钮防止重复提交
+            submitBtn.disabled = true;
+            submitBtn.textContent = '提交中...';
+            
+            try {
+                // 获取表单数据
+                const formData = {
+                    name: document.getElementById('name').value,
+                    gender: document.getElementById('gender').value,
+                    age: parseInt(document.getElementById('age').value),
+                    phone: document.getElementById('phone').value,
+                    symptoms: document.getElementById('symptoms').value,
+                    medicalHistory: document.getElementById('medicalHistory').value,
+                    medications: Array.from(document.querySelectorAll('input[name="medications"]:checked'))
+                        .map(cb => cb.value),
+                    bloodPressure: document.getElementById('bloodPressure').value,
+                    submitTime: new Date(),
+                    source: 'web_form'
+                };
+
+                // 创建Patient对象
+                const Patient = AV.Object.extend('Patient');
+                const patient = new Patient();
+                
+                // 设置字段值
+                Object.keys(formData).forEach(key => {
+                    patient.set(key, formData[key]);
+                });
+
+                // 保存到LeanCloud
+                const result = await patient.save();
+                console.log('数据保存成功:', result);
+
+                // 显示成功消息
+                successMessage.style.display = 'block';
+                
+                // 重置表单
+                document.getElementById('patientForm').reset();
+                
+                // 3秒后隐藏成功消息
+                setTimeout(() => {
+                    successMessage.style.display = 'none';
+                }, 3000);
+                
+            } catch (error) {
+                console.error('数据保存失败:', error);
+                
+                // 显示详细的错误信息
+                let errorMsg = '提交失败，请稍后重试';
+                if (error.code === 401) {
+                    errorMsg = '认证失败，请检查App ID和App Key';
+                } else if (error.code === 403) {
+                    errorMsg = '权限拒绝，请检查安全域名和Class权限';
+                } else if (error.code === 404) {
+                    errorMsg = '服务器地址错误，请检查配置';
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
+                
+                errorMessage.textContent = errorMsg;
+                errorMessage.style.display = 'block';
+                
+            } finally {
+                // 重新启用提交按钮
+                submitBtn.disabled = false;
+                submitBtn.textContent = '提交信息';
+            }
+        });
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initLeanCloud().then(success => {
+                if (!success) {
+                    document.getElementById('submitBtn').disabled = true;
+                }
+            });
+        });
+    </script>
+</body>
+</html>
