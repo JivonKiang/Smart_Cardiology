@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数据分析面板 - 心内科门诊系统</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', Arial, sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            background-color: #1a73e8;
+            color: white;
+            padding: 15px 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-card h3 {
+            margin-top: 0;
+            color: #1a73e8;
+        }
+        .stat-number {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1a73e8;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .chart-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .data-table {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            overflow-x: auto;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            color: #1a73e8;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        select, input {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>心内科门诊 - 数据分析面板</h1>
+    </div>
+    
+    <div class="container">
+        <div class="filters">
+            <select id="timeRange">
+                <option value="today">今日</option>
+                <option value="week">本周</option>
+                <option value="month">本月</option>
+                <option value="all">全部</option>
+            </select>
+            <input type="date" id="startDate">
+            <span>至</span>
+            <input type="date" id="endDate">
+            <button id="applyFilter">应用筛选</button>
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>总患者数</h3>
+                <div class="stat-number" id="totalPatients">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>平均年龄</h3>
+                <div class="stat-number" id="avgAge">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>男性比例</h3>
+                <div class="stat-number" id="maleRatio">0%</div>
+            </div>
+            <div class="stat-card">
+                <h3>女性比例</h3>
+                <div class="stat-number" id="femaleRatio">0%</div>
+            </div>
+        </div>
+        
+        <div class="charts-container">
+            <div class="chart-card">
+                <h3>症状分布</h3>
+                <canvas id="symptomsChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h3>年龄分布</h3>
+                <canvas id="ageChart"></canvas>
+            </div>
+        </div>
+        
+        <div class="data-table">
+            <h3>详细数据</h3>
+            <table id="patientTable">
+                <thead>
+                    <tr>
+                        <th>姓名</th>
+                        <th>性别</th>
+                        <th>年龄</th>
+                        <th>主要症状</th>
+                        <th>登记时间</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- 数据将通过JavaScript动态生成 -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // Firebase配置 - 替换为您的实际配置
+        const firebaseConfig = {
+            apiKey: "您的API密钥",
+            authDomain: "您的项目ID.firebaseapp.com",
+            databaseURL: "https://您的项目ID.firebaseio.com",
+            projectId: "您的项目ID",
+            storageBucket: "您的项目ID.appspot.com",
+            messagingSenderId: "您的发送者ID",
+            appId: "您的应用ID"
+        };
+        
+        // 初始化Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        
+        // 图表实例
+        let symptomsChart, ageChart;
+        
+        // 加载数据
+        function loadData() {
+            const patientsRef = database.ref('patients');
+            patientsRef.once('value').then((snapshot) => {
+                const patients = snapshot.val();
+                updateStats
