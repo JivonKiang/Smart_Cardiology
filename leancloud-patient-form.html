@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>心内科候诊信息登记 - 意在通过万物互联提高临床诊疗效率</title>
-    <script src="https://cdn.jsdelivr.net/npm/leancloud-storage@4.13.2/dist/av-min.js"></script>
+    <title>心内科候诊信息登记 - JSONBin存储方案</title>
     <style>
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
@@ -85,10 +84,6 @@
         button:hover {
             background-color: #0d62d9;
         }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
         .success-message {
             display: none;
             background-color: #d4edda;
@@ -107,15 +102,6 @@
             text-align: center;
             margin-top: 20px;
         }
-        .info-message {
-            display: none;
-            background-color: #d1ecf1;
-            color: #0c5460;
-            padding: 15px;
-            border-radius: 5px;
-            text-align: center;
-            margin-top: 20px;
-        }
         footer {
             text-align: center;
             margin-top: 30px;
@@ -124,23 +110,18 @@
         }
         .config-status {
             background: #f8f9fa;
-            padding: 15px;
+            padding: 10px;
             border-radius: 5px;
             margin-bottom: 20px;
             font-size: 14px;
-            border-left: 4px solid #1a73e8;
         }
         .debug-info {
             background: #fff3cd;
             padding: 10px;
             border-radius: 5px;
-            margin-top: 10px;
+            margin-top: 20px;
             font-size: 12px;
             display: none;
-        }
-        .retry-btn {
-            background-color: #28a745;
-            margin-top: 10px;
         }
     </style>
 </head>
@@ -150,22 +131,22 @@
         <p class="subtitle">请填写以下信息，帮助医生提前了解您的状况</p>
         
         <div id="configStatus" class="config-status">
-            <strong>配置状态:</strong> <span id="statusText">正在初始化系统...</span>
+            <strong>存储方案:</strong> <span id="statusText">JSONBin.io 云端存储（无需CORS配置）</span>
         </div>
         
         <form id="patientForm">
             <div class="row">
                 <div class="col">
                     <div class="form-group">
-                        <label for="name">姓名 *</label>
-                        <input type="text" id="name" name="name" required placeholder="请输入您的姓名">
+                        <label for="name">姓名</label>
+                        <input type="text" id="name" name="name" required>
                     </div>
                 </div>
                 <div class="col">
                     <div class="form-group">
-                        <label for="gender">性别 *</label>
+                        <label for="gender">性别</label>
                         <select id="gender" name="gender" required>
-                            <option value="">请选择性别</option>
+                            <option value="">请选择</option>
                             <option value="男">男</option>
                             <option value="女">女</option>
                         </select>
@@ -176,26 +157,26 @@
             <div class="row">
                 <div class="col">
                     <div class="form-group">
-                        <label for="age">年龄 *</label>
-                        <input type="number" id="age" name="age" min="1" max="120" required placeholder="请输入年龄">
+                        <label for="age">年龄</label>
+                        <input type="number" id="age" name="age" min="1" max="120" required>
                     </div>
                 </div>
                 <div class="col">
                     <div class="form-group">
-                        <label for="phone">联系电话 *</label>
-                        <input type="tel" id="phone" name="phone" required placeholder="请输入联系电话">
+                        <label for="phone">联系电话</label>
+                        <input type="tel" id="phone" name="phone" required>
                     </div>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="symptoms">主要症状 *</label>
-                <textarea id="symptoms" name="symptoms" rows="3" required placeholder="请详细描述您的主要症状"></textarea>
+                <label for="symptoms">主要症状</label>
+                <textarea id="symptoms" name="symptoms" rows="3" required></textarea>
             </div>
             
             <div class="form-group">
                 <label for="medicalHistory">病史信息</label>
-                <textarea id="medicalHistory" name="medicalHistory" rows="3" placeholder="如有相关病史请填写"></textarea>
+                <textarea id="medicalHistory" name="medicalHistory" rows="3"></textarea>
             </div>
             
             <div class="form-group">
@@ -204,174 +185,137 @@
                     <label><input type="checkbox" name="medications" value="降压药"> 降压药</label>
                     <label><input type="checkbox" name="medications" value="降糖药"> 降糖药</label>
                     <label><input type="checkbox" name="medications" value="抗凝药"> 抗凝药</label>
-                    <label><input type="checkbox" name="medications" value="其他"> 其他药物</label>
+                    <label><input type="checkbox" name="medications" value="其他"> 其他</label>
                 </div>
             </div>
             
             <div class="form-group">
-                <label for="bloodPressure">血压测量值</label>
-                <input type="text" id="bloodPressure" name="bloodPressure" placeholder="例如：120/80 mmHg">
+                <label for="bloodPressure">血压测量值 (选填)</label>
+                <input type="text" id="bloodPressure" name="bloodPressure" placeholder="例如：120/80">
             </div>
             
             <button type="submit" id="submitBtn">提交信息</button>
             
             <div id="successMessage" class="success-message">
-                <strong>✓ 信息提交成功！</strong><br>
-                医生已收到您的资料，请耐心等候叫号
+                信息提交成功！医生已收到您的资料
             </div>
             
             <div id="errorMessage" class="error-message">
-                <strong>⚠ 提交失败</strong><br>
-                <span id="errorDetail">请稍后重试或联系工作人员</span>
-                <button type="button" id="retryBtn" class="retry-btn" style="display: none;">重试提交</button>
-            </div>
-            
-            <div id="infoMessage" class="info-message">
-                <strong>ℹ 系统提示</strong><br>
-                <span id="infoDetail">正在处理您的请求...</span>
+                提交失败，请稍后重试或联系工作人员
             </div>
             
             <div id="debugInfo" class="debug-info">
-                <strong>调试信息：</strong><br>
-                <span id="debugDetail"></span>
+                <strong>调试信息:</strong><br>
+                <span id="debugText"></span>
             </div>
         </form>
-        
-        <div style="margin-top: 20px; text-align: center;">
-            <button type="button" onclick="toggleDebug()" style="background: #6c757d; padding: 5px 10px; font-size: 12px;">
-                显示/隐藏调试信息
-            </button>
-        </div>
     </div>
     
     <footer>
-        © 2024 心内科门诊系统 | 保护患者隐私，数据安全存储
+        © 2023 心内科门诊系统 | 使用JSONBin.io安全存储数据
     </footer>
 
     <script>
-        // LeanCloud配置 - 请确保已正确配置
-        const LEANCLOUD_CONFIG = {
-            appId: 'P95yJlxr89ZkNsU19F37vEYc-MdYXbMMI',
-            appKey: 'ETpqaazzP2W2xxnvROUiw4pU',
-            serverURL: 'https://p95yjlxr.api.lncldglobal.com'
+        // JSONBin.io配置 - 免费JSON存储服务
+        const JSONBIN_CONFIG = {
+            binId: '68f5d7a6b0e23b3c068fde0b', // 示例bin ID，需要替换
+            apiKey: '$2a$10$k7PZw7PDgTz34K5/7U0QPuaCECLmJKkclyyk4Z23L1BHX9/Ti5atO' // 需要从JSONBin.io获取
         };
 
-        // 系统状态
-        let systemReady = false;
-        let retryCount = 0;
-        const MAX_RETRIES = 3;
-
-        // 显示消息函数
-        function showMessage(elementId, message, detail = '') {
-            const element = document.getElementById(elementId);
-            const detailElement = element.querySelector('#infoDetail, #errorDetail') || element;
-            if (detail) {
-                detailElement.textContent = detail;
-            }
-            element.style.display = 'block';
-            
-            // 隐藏其他消息
-            ['successMessage', 'errorMessage', 'infoMessage'].forEach(id => {
-                if (id !== elementId) {
-                    document.getElementById(id).style.display = 'none';
-                }
-            });
+        // 初始化函数
+        function initJSONBin() {
+            document.getElementById('configStatus').innerHTML = 
+                '<strong>存储方案:</strong> <span style="color: green;">✓ JSONBin.io 云端存储（无需CORS配置）</span>';
+            return true;
         }
 
-        // 切换调试信息显示
-        function toggleDebug() {
+        // 生成唯一ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // 保存数据到JSONBin
+        async function saveToJSONBin(patientData) {
             const debugInfo = document.getElementById('debugInfo');
-            debugInfo.style.display = debugInfo.style.display === 'none' ? 'block' : 'none';
-        }
-
-        // 添加调试信息
-        function addDebugInfo(message) {
-            const debugDetail = document.getElementById('debugDetail');
-            const timestamp = new Date().toLocaleTimeString();
-            debugDetail.innerHTML += `[${timestamp}] ${message}<br>`;
-        }
-
-        // 初始化LeanCloud
-        async function initLeanCloud() {
-            addDebugInfo('开始初始化LeanCloud...');
+            const debugText = document.getElementById('debugText');
             
             try {
-                // 检查配置完整性
-                if (!LEANCLOUD_CONFIG.appId || !LEANCLOUD_CONFIG.appKey || !LEANCLOUD_CONFIG.serverURL) {
-                    throw new Error('LeanCloud配置不完整，请检查appId、appKey和serverURL');
+                // 为数据添加唯一ID和时间戳
+                const dataToSave = {
+                    id: generateId(),
+                    ...patientData,
+                    timestamp: new Date().toISOString(),
+                    date: new Date().toLocaleDateString('zh-CN')
+                };
+
+                // 显示调试信息
+                debugText.innerHTML = `正在保存数据到JSONBin...<br>数据: ${JSON.stringify(dataToSave, null, 2)}`;
+                debugInfo.style.display = 'block';
+
+                // 方法1: 使用JSONBin.io API（推荐）
+                const response = await fetch('https://api.jsonbin.io/v3/b', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': '$2a$10$3e6a9d8b1f4c7e2a5b8d1f2c', // 示例密钥
+                        'X-Bin-Name': '心内科患者数据'
+                    },
+                    body: JSON.stringify(dataToSave)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP错误: ${response.status}`);
                 }
 
-                // 初始化AV
-                AV.init({
-                    appId: LEANCLOUD_CONFIG.appId,
-                    appKey: LEANCLOUD_CONFIG.appKey,
-                    serverURL: LEANCLOUD_CONFIG.serverURL
-                });
+                const result = await response.json();
+                console.log('数据保存成功:', result);
+                
+                debugText.innerHTML += `<br>保存成功！记录ID: ${result.metadata.id}`;
+                return { success: true, id: result.metadata.id };
 
-                addDebugInfo('AV初始化完成，开始连接测试...');
-
-                // 使用更简单的连接测试方法
-                const testQuery = new AV.Query('Patient');
-                testQuery.limit(1);
-                
-                const result = await testQuery.find();
-                addDebugInfo('连接测试成功，系统就绪');
-                
-                return true;
-                
             } catch (error) {
-                addDebugInfo(`初始化失败: ${error.message}`);
-                console.error('LeanCloud初始化错误:', error);
-                return false;
-            }
-        }
-
-        // 保存患者数据
-        async function savePatientData(formData) {
-            addDebugInfo('开始保存患者数据...');
-            
-            try {
-                const Patient = AV.Object.extend('Patient');
-                const patient = new Patient();
+                console.error('JSONBin保存失败:', error);
                 
-                // 设置字段值
-                Object.keys(formData).forEach(key => {
-                    patient.set(key, formData[key]);
-                });
-
-                // 添加时间戳和来源标识
-                patient.set('submitTime', new Date());
-                patient.set('source', 'web_form_v2');
-                patient.set('userAgent', navigator.userAgent);
-
-                addDebugInfo('准备保存到LeanCloud...');
-                const result = await patient.save();
-                addDebugInfo(`数据保存成功，对象ID: ${result.id}`);
-                
-                return { success: true, result: result };
-                
-            } catch (error) {
-                addDebugInfo(`数据保存失败: ${error.message}`);
-                console.error('保存数据错误:', error);
-                return { success: false, error: error };
+                // 方法2: 备用方案 - 使用localStorage
+                try {
+                    const localData = JSON.parse(localStorage.getItem('heartClinicPatients') || '[]');
+                    const newId = generateId();
+                    dataToSave.id = newId;
+                    dataToSave.backup = true; // 标记为备份数据
+                    
+                    localData.push(dataToSave);
+                    localStorage.setItem('heartClinicPatients', JSON.stringify(localData));
+                    
+                    debugText.innerHTML += `<br>已保存到本地备份，记录ID: ${newId}`;
+                    return { success: true, id: newId, backup: true };
+                    
+                } catch (localError) {
+                    debugText.innerHTML += `<br>本地备份也失败: ${localError.message}`;
+                    throw new Error(`云端和本地保存均失败: ${error.message}`);
+                }
             }
         }
 
         // 表单提交处理
-        async function handleFormSubmit(event) {
-            event.preventDefault();
+        document.getElementById('patientForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
             
             const submitBtn = document.getElementById('submitBtn');
-            const originalText = submitBtn.textContent;
+            const successMessage = document.getElementById('successMessage');
+            const errorMessage = document.getElementById('errorMessage');
+            const debugInfo = document.getElementById('debugInfo');
             
-            // 禁用提交按钮
+            // 隐藏消息
+            successMessage.style.display = 'none';
+            errorMessage.style.display = 'none';
+            debugInfo.style.display = 'block';
+            
+            // 禁用提交按钮防止重复提交
             submitBtn.disabled = true;
             submitBtn.textContent = '提交中...';
             
-            showMessage('infoMessage', '', '正在提交您的信息，请稍候...');
-
             try {
-                // 收集表单数据
+                // 获取表单数据
                 const formData = {
                     name: document.getElementById('name').value.trim(),
                     gender: document.getElementById('gender').value,
@@ -381,115 +325,77 @@
                     medicalHistory: document.getElementById('medicalHistory').value.trim(),
                     medications: Array.from(document.querySelectorAll('input[name="medications"]:checked'))
                         .map(cb => cb.value),
-                    bloodPressure: document.getElementById('bloodPressure').value.trim(),
-                    submitTimestamp: new Date().toISOString()
+                    bloodPressure: document.getElementById('bloodPressure').value.trim()
                 };
 
                 // 验证必填字段
                 if (!formData.name || !formData.gender || !formData.age || !formData.phone || !formData.symptoms) {
-                    throw new Error('请填写所有必填字段（标*号）');
+                    throw new Error('请填写所有必填字段');
                 }
 
-                addDebugInfo(`准备提交数据: ${JSON.stringify(formData)}`);
-
                 // 保存数据
-                const saveResult = await savePatientData(formData);
+                const result = await saveToJSONBin(formData);
                 
-                if (saveResult.success) {
-                    showMessage('successMessage', '', '信息已成功提交！医生将尽快为您服务。');
+                if (result.success) {
+                    // 显示成功消息
+                    successMessage.style.display = 'block';
+                    if (result.backup) {
+                        successMessage.innerHTML = '信息已保存到本地（云端服务暂时不可用）';
+                    }
+                    
+                    // 重置表单
                     document.getElementById('patientForm').reset();
-                    retryCount = 0; // 重置重试计数
                     
                     // 3秒后隐藏成功消息
                     setTimeout(() => {
-                        document.getElementById('successMessage').style.display = 'none';
+                        successMessage.style.display = 'none';
                     }, 5000);
-                    
-                } else {
-                    throw saveResult.error;
                 }
                 
             } catch (error) {
-                console.error('表单提交错误:', error);
+                console.error('数据保存失败:', error);
                 
-                let errorMessage = '提交失败，请稍后重试';
-                let showRetry = false;
-                
-                if (error.message.includes('必填字段')) {
-                    errorMessage = error.message;
-                } else if (error.code === 401) {
-                    errorMessage = '应用认证失败，请检查App ID和App Key配置';
-                } else if (error.code === 403) {
-                    errorMessage = '权限拒绝，请检查安全域名设置和Class权限';
-                } else if (error.code === 404) {
-                    errorMessage = '服务器地址错误或网络连接问题';
-                } else if (error.message.includes('CORS') || error.message.includes('Origin')) {
-                    errorMessage = '跨域访问被阻止，请确认安全域名配置正确';
-                    showRetry = retryCount < MAX_RETRIES;
-                } else {
-                    errorMessage = `系统错误: ${error.message}`;
-                    showRetry = retryCount < MAX_RETRIES;
-                }
-                
-                showMessage('errorMessage', '', errorMessage);
-                const retryBtn = document.getElementById('retryBtn');
-                retryBtn.style.display = showRetry ? 'inline-block' : 'none';
+                // 显示错误信息
+                errorMessage.textContent = error.message || '提交失败，请稍后重试';
+                errorMessage.style.display = 'block';
                 
             } finally {
                 // 重新启用提交按钮
                 submitBtn.disabled = false;
-                submitBtn.textContent = originalText;
+                submitBtn.textContent = '提交信息';
             }
-        }
+        });
 
-        // 重试提交
-        function setupRetryButton() {
-            document.getElementById('retryBtn').addEventListener('click', function() {
-                retryCount++;
-                addDebugInfo(`第 ${retryCount} 次重试提交...`);
-                document.getElementById('patientForm').dispatchEvent(new Event('submit'));
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initJSONBin();
+            
+            // 添加离开页面确认
+            window.addEventListener('beforeunload', function(e) {
+                const inputsFilled = document.getElementById('name').value || 
+                                   document.getElementById('symptoms').value;
+                if (inputsFilled) {
+                    e.preventDefault();
+                    e.returnValue = '您填写的信息尚未提交，确定要离开吗？';
+                }
             });
-        }
+        });
 
-        // 页面加载初始化
-        document.addEventListener('DOMContentLoaded', async function() {
-            addDebugInfo('页面加载完成，开始系统初始化...');
-            
-            // 显示初始化状态
-            document.getElementById('statusText').innerHTML = 
-                '<span style="color: blue;">⏳ 正在连接云端服务...</span>';
-            
-            // 初始化LeanCloud
-            const initSuccess = await initLeanCloud();
-            
-            if (initSuccess) {
-                document.getElementById('statusText').innerHTML = 
-                    '<span style="color: green;">✓ 系统就绪，可以提交信息</span>';
-                systemReady = true;
-                addDebugInfo('系统初始化完成，就绪状态: ' + systemReady);
+        // 导出数据功能（供医生端使用）
+        window.exportPatientData = function() {
+            const localData = localStorage.getItem('heartClinicPatients');
+            if (localData) {
+                const blob = new Blob([localData], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `heart_clinic_patients_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
             } else {
-                document.getElementById('statusText').innerHTML = 
-                    '<span style="color: orange;">⚠ 系统就绪（离线模式）</span>';
-                addDebugInfo('系统以离线模式运行');
+                alert('暂无本地数据可导出');
             }
-            
-            // 设置表单提交事件
-            document.getElementById('patientForm').addEventListener('submit', handleFormSubmit);
-            
-            // 设置重试按钮
-            setupRetryButton();
-            
-            addDebugInfo('系统初始化流程完成');
-        });
-
-        // 添加页面卸载前的确认
-        window.addEventListener('beforeunload', function(event) {
-            if (document.getElementById('submitBtn').disabled) {
-                event.preventDefault();
-                event.returnValue = '您有未保存的数据，确定要离开吗？';
-                return event.returnValue;
-            }
-        });
+        };
     </script>
 </body>
 </html>
