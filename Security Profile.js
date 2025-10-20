@@ -3,8 +3,8 @@
 
 // GitHub配置 - 请替换为您的实际配置
 const GITHUB_CONFIG = {
-    token: "YOUR_GITHUB_TOKEN_HERE", // 替换为您的GitHub个人访问令牌
-    repo: "YOUR_USERNAME/YOUR_REPO"  // 替换为您的GitHub仓库名
+    token: "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", // 替换为您的GitHub个人访问令牌
+    repo: "JivonKiang/Smart_Cardiology"  // 替换为您的GitHub仓库名
 };
 
 // 导出配置对象
